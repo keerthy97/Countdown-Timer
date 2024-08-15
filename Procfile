@@ -1,1 +1,0 @@
-web gunicorn countdown_timer.wsgi:application --log-file -
