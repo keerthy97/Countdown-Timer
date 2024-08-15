@@ -1,74 +1,265 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Countdown Timer</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: #ffffff;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* Title */
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Timer Display */
+        .timer {
+            font-size: 5em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            letter-spacing: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        /* Input Fields */
+        .controls input {
+            width: 60px;
+            padding: 10px;
+            font-size: 1.5em;
+            border: none;
+            border-radius: 10px;
+            text-align: center;
+            margin: 0 5px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            outline: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .controls input:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Buttons */
+        button {
+            font-size: 1.2em;
+            padding: 10px 30px;
+            margin: 15px 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #start-pause {
+            background-color: #28a745;
+            color: white;
+        }
+
+        #start-pause:hover {
+            background-color: #218838;
+        }
+
+        #reset {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        #reset:hover {
+            background-color: #c82333;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 15px;
+            font-size: 2em;
+            color: #0072ff;
+        }
+
+        .modal-content button {
+            background-color: #0072ff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .modal-content button:hover {
+            background-color: #005bb5;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .timer {
+                font-size: 3.5em;
+            }
+            .controls input {
+                width: 50px;
+                font-size: 1.2em;
+            }
+            button {
+                padding: 8px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Countdown Timer</h1>
-    <div id="timer-display">00:00:00</div>
-    <input type="number" id="hours" placeholder="Hours" min="0">
-    <input type="number" id="minutes" placeholder="Minutes" min="0" max="59">
-    <input type="number" id="seconds" placeholder="Seconds" min="0" max="59">
-    <button id="start-btn">Start</button>
-    <button id="pause-btn">Pause</button>
-    <button id="reset-btn">Reset</button>
+    <div class="container">
+        <h1>Countdown Timer</h1>
+        <div class="timer" id="timer-display">
+            00:00:00
+        </div>
+        <div class="controls">
+            <input type="number" id="hours" placeholder="HH" min="0" max="23">
+            <input type="number" id="minutes" placeholder="MM" min="0" max="59">
+            <input type="number" id="seconds" placeholder="SS" min="0" max="59">
+        </div>
+        <div class="controls">
+            <button id="start-pause">Start</button>
+            <button id="reset">Reset</button>
+        </div>
+        <div class="footer">
+            <p>Set your timer and stay on track!</p>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="timeUpModal" class="modal">
+        <div class="modal-content">
+            <h2>Time's Up!</h2>
+            <button id="closeModal">Close</button>
+        </div>
+    </div>
 
     <script>
         let timer;
-        let isPaused = false;
-        let timeRemaining = 0;
+        let isRunning = false;
+        let hours = 0;
+        let minutes = 0;
+        let seconds = 0;
 
-        document.getElementById('start-btn').addEventListener('click', function () {
-            if (isPaused) {
-                isPaused = false;
-                startTimer(timeRemaining); // Resume timer with remaining time
+        document.getElementById('start-pause').addEventListener('click', function() {
+            if (isRunning) {
+                clearInterval(timer);
+                this.textContent = 'Start';
             } else {
-                const hours = parseInt(document.getElementById('hours').value) || 0;
-                const minutes = parseInt(document.getElementById('minutes').value) || 0;
-                const seconds = parseInt(document.getElementById('seconds').value) || 0;
-
-                timeRemaining = (hours * 3600) + (minutes * 60) + seconds;
-
-                startTimer(timeRemaining); // Start timer with new time
+                hours = parseInt(document.getElementById('hours').value) || 0;
+                minutes = parseInt(document.getElementById('minutes').value) || 0;
+                seconds = parseInt(document.getElementById('seconds').value) || 0;
+                startTimer();
+                this.textContent = 'Pause';
             }
+            isRunning = !isRunning;
         });
 
-        document.getElementById('pause-btn').addEventListener('click', function () {
+        document.getElementById('reset').addEventListener('click', function() {
             clearInterval(timer);
-            isPaused = true;
+            isRunning = false;
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
+            updateDisplay();
+            document.getElementById('start-pause').textContent = 'Start';
         });
 
-        document.getElementById('reset-btn').addEventListener('click', function () {
-            clearInterval(timer);
-            document.getElementById('timer-display').textContent = '00:00:00';
-            isPaused = false;
-            timeRemaining = 0;
-        });
-
-        function startTimer(duration) {
-            const startTime = Date.now();
-            timer = setInterval(function () {
-                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-                const timeLeft = duration - elapsedTime;
-
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    document.getElementById('timer-display').textContent = '00:00:00';
+        function startTimer() {
+            timer = setInterval(function() {
+                if (seconds > 0) {
+                    seconds--;
+                } else if (minutes > 0) {
+                    minutes--;
+                    seconds = 59;
+                } else if (hours > 0) {
+                    hours--;
+                    minutes = 59;
+                    seconds = 59;
                 } else {
-                    const hours = Math.floor(timeLeft / 3600);
-                    const minutes = Math.floor((timeLeft % 3600) / 60);
-                    const seconds = timeLeft % 60;
-
-                    document.getElementById('timer-display').textContent = 
-                        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    clearInterval(timer);
+                    showTimeUpModal();
                 }
-
-                timeRemaining = timeLeft;
+                updateDisplay();
             }, 1000);
         }
+
+        function updateDisplay() {
+            document.getElementById('timer-display').textContent =
+                String(hours).padStart(2, '0') + ':' +
+                String(minutes).padStart(2, '0') + ':' +
+                String(seconds).padStart(2, '0');
+        }
+
+        function showTimeUpModal() {
+            document.getElementById('timeUpModal').style.display = 'flex';
+        }
+
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('timeUpModal').style.display = 'none';
+        });
     </script>
 </body>
 </html>
