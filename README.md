@@ -35,9 +35,24 @@ countdown_timer/
 │           └── index.html
 │
 └── manage.py
-
+```
 
 ## Setup and Installation
 ### Prerequisites
 Python 3.9
 Django
+
+## Installation Steps
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/your-username/countdown_timer.git
+   cd countdown_timer
+   pip install -r requirements.txt
+   python manage.py runserver
+
+## Live Demo
+
+Check out the live demo of the project [here](https://countdown-timer-iota-flame.vercel.app/).
+
